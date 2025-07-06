@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="hi">
 <head>
   <meta charset="UTF-8">
@@ -47,8 +8,18 @@
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    .map-background {
+      background-image: url('https://via.placeholder.com/300x200?text=Map+Placeholder');
+      background-size: cover;
+      background-position: center;
+    }
+    .login-background {
+      background-color: #f5f5f5;
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-white">
+<body class="bg-gray-900 text-black">
   <div id="root"></div>
 
   <script type="text/babel">
@@ -60,6 +31,7 @@
       const [location, setLocation] = useState('डमी लोकेशन');
       const [chatHistory, setChatHistory] = useState([]);
       const [inputMessage, setInputMessage] = useState('');
+      const [userPreferences, setUserPreferences] = useState({});
 
       // Dummy login handler
       const handleLogin = () => setPage('profile');
@@ -73,114 +45,153 @@
       // Confirm location and move to chat
       const handleConfirmLocation = () => setPage('chat');
 
-      // Handle chat input and mock AI response
-      const handleSendMessage = (e) => {
+      // Fetch response from backend
+      const getBackendResponse = async (message) => {
+        try {
+          const response = await fetch('https://ai-dukandar-mvp.vercel.app/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message }),
+          });
+          const data = await response.json();
+          return data.reply;
+        } catch (error) {
+          console.error('Error fetching backend response:', error);
+          return 'क्षमा करें, अभी कोई जवाब नहीं मिला। बाद में पुन: प्रयास करें।';
+        }
+      };
+
+      // Handle chat input and backend response
+      const handleSendMessage = async (e) => {
         e.preventDefault();
         if (inputMessage.trim()) {
           const newHistory = [...chatHistory, { sender: 'user', text: inputMessage }];
           setChatHistory(newHistory);
 
-          // Mock AI response based on input
-          let aiResponse = '';
-          if (inputMessage.includes('चावल') || inputMessage.includes('rice')) {
-            aiResponse = '1 किलो चावल उपलब्ध है। क्या ऑर्डर करना चाहते हैं?';
-          } else if (inputMessage.includes('दाल') || inputMessage.includes('dal')) {
-            aiResponse = '500 ग्राम दाल उपलब्ध है। ऑर्डर करें?';
+          const aiResponse = await getBackendResponse(inputMessage);
+          console.log('Raw backend response:', aiResponse); // Debug log
+          if (aiResponse) {
+            setChatHistory([...newHistory, { sender: 'ai', text: aiResponse }]);
           } else {
-            aiResponse = 'कृपया अपनी जरूरत बताएं (जैसे: चावल, दाल)';
+            console.log('No valid response from backend');
+            setChatHistory([...newHistory, { sender: 'ai', text: 'कोई जवाब नहीं मिला, कृपया बाद में प्रयास करें।' }]);
           }
-          setChatHistory([...newHistory, { sender: 'ai', text: aiResponse }]);
           setInputMessage('');
         }
+      };
+      // Generate suggestions based on chat history
+      const getSuggestions = () => {
+        const prefs = Object.entries(userPreferences)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 2)
+          .map(([item]) => (item === 'rice' ? '1 किलो चावल' : '500 ग्राम दाल'));
+        return prefs.length ? prefs.join(', ') : '1 किलो चावल, 500 ग्राम दाल';
       };
 
       // Navigation handlers
       const navigateTo = (targetPage) => setPage(targetPage);
 
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4">
-          {page === 'login' && (
-            <div className="bg-green-600 p-6 rounded-lg shadow-lg text-center w-full max-w-md">
-              <h1 className="text-2xl mb-4">AI दुकानदार</h1>
-              <p className="mb-4">मोबाइल नंबर से लॉगिन करें (डमी)</p>
-              <button
-                onClick={handleLogin}
-                className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800"
-              >
-                OTP भेजें
-              </button>
-            </div>
-          )}
-          {page === 'profile' && (
-            <div className="bg-green-600 p-6 rounded-lg shadow-lg text-center w-full max-w-md">
-              <h1 className="text-2xl mb-4">AI दुकानदार</h1>
-              <p className="mb-4">अपना नाम दर्ज करें</p>
-              <form onSubmit={handleNameSubmit} className="space-y-4">
+        <div className="min-h-screen flex flex-col items-center justify-between p-4">
+          <div className="w-full max-w-md">
+            {page === 'login' && (
+              <div className="bg-green-600 p-4 rounded-t-lg shadow-lg text-center login-background">
+                <h1 className="text-2xl mb-4 text-white">AI दुकानदार</h1>
+                <p className="mb-4 text-white">मोबाइल नंबर से लॉगिन करें</p>
                 <input
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="नाम"
-                  className="p-2 rounded text-black w-full"
-                  required
+                  placeholder="मोबाइल नंबर"
+                  className="p-2 mb-4 rounded w-full text-black"
                 />
                 <button
-                  type="submit"
-                  className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 w-full"
+                  onClick={handleLogin}
+                  className="bg-green-700 text-white px-4 py-2 rounded w-full hover:bg-green-800"
                 >
-                  लोकेशन ट्रैक करें
+                  OTP भेजें
                 </button>
-              </form>
-            </div>
-          )}
-          {page === 'confirmLocation' && (
-            <div className="bg-green-600 p-6 rounded-lg shadow-lg text-center w-full max-w-md">
-              <h1 className="text-2xl mb-4">AI दुकानदार</h1>
-              <p className="mb-4">{name} (नाम)</p>
-              <p className="mb-4">लोकेशन: {location}</p>
-              <button
-                onClick={handleConfirmLocation}
-                className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 w-full"
-              >
-                लोकेशन की पुष्टि करें
-              </button>
-            </div>
-          )}
-          {page === 'chat' && (
-            <div className="bg-green-600 p-6 rounded-lg shadow-lg text-center w-full max-w-md">
-              <h1 className="text-2xl mb-4">AI दुकानदार</h1>
-              <p className="mb-4">AI से चैटिंग करें | ऑर्डर #12345</p>
-              <div className="mb-4 h-48 overflow-y-auto">
-                {chatHistory.map((msg, index) => (
-                  <p key={index} className={msg.sender === 'user' ? 'text-right' : 'text-left'}>
-                    {msg.text}
-                  </p>
-                ))}
               </div>
-              <form onSubmit={handleSendMessage} className="space-y-2">
-                <input
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="क्या खरीदना चाहते हैं?"
-                  className="p-2 rounded text-black w-full"
-                />
+            )}
+            {page === 'profile' && (
+              <div className="bg-green-600 p-4 rounded-t-lg shadow-lg text-center w-full max-w-md relative">
+                <h1 className="text-2xl mb-4 text-white">AI दुकानदार</h1>
+                <p className="mb-4 text-white">अपना नाम दर्ज करें</p>
+                <form onSubmit={handleNameSubmit} className="space-y-4">
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="नाम"
+                    className="p-2 rounded text-black w-full"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 w-full"
+                  >
+                    लोकेशन ट्रैक करें
+                  </button>
+                </form>
+                <div className="map-background absolute inset-0 opacity-20"></div>
+              </div>
+            )}
+            {page === 'confirmLocation' && (
+              <div className="bg-green-600 p-4 rounded-t-lg shadow-lg text-center w-full max-w-md relative">
+                <h1 className="text-2xl mb-4 text-white">AI दुकानदार</h1>
+                <p className="mb-4 text-white">{name} (नाम)</p>
+                <p className="mb-4 text-white">लोकेशन: {location}</p>
                 <button
-                  type="submit"
+                  onClick={handleConfirmLocation}
                   className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 w-full"
                 >
-                  भेजें
+                  लोकेशन की पुष्टि करें
                 </button>
-              </form>
-              <p className="text-sm mt-2">सुझाव: 1 किलो चावल, 500 ग्राम दाल</p>
-              <p className="text-sm">क्या आपकी लोकेशन घर की है?</p>
-            </div>
-          )}
-          <div className="flex justify-around w-full mt-4">
-            <button onClick={() => navigateTo('home')} className="text-white">घर</button>
-            <button onClick={() => navigateTo('shop')} className="text-white">दुकान</button>
-            <button onClick={() => navigateTo('chat')} className="text-white">चैट</button>
-            <button onClick={() => navigateTo('profile')} className="text-white">प्रोफाइल</button>
+                <div className="map-background absolute inset-0 opacity-20"></div>
+              </div>
+            )}
+            {page === 'chat' && (
+              <div className="bg-green-600 p-4 rounded-t-lg shadow-lg text-center w-full max-w-md relative">
+                <h1 className="text-2xl mb-4 text-white">AI दुकानदार</h1>
+                <p className="mb-4 text-white">AI से चैटिंग करें | ऑर्डर #12345</p>
+                <div className="mb-4 h-48 overflow-y-auto bg-white text-black p-2 rounded">
+                  {chatHistory.map((msg, index) => (
+                    <p key={index} className={msg.sender === 'user' ? 'text-right' : 'text-left'}>
+                      {msg.text}
+                    </p>
+                  ))}
+                </div>
+                <form onSubmit={handleSendMessage} className="space-y-2">
+                  <input
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder="क्या खरीदना चाहते हैं?"
+                    className="p-2 rounded text-black w-full"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 w-full"
+                  >
+                    भेजें
+                  </button>
+                </form>
+                <p className="text-sm mt-2 text-white">सुझाव: {getSuggestions()}</p>
+                <p className="text-sm text-white">क्या आपकी लोकेशन घर की है?</p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-around w-full max-w-md p-2 bg-white text-black rounded-b-lg">
+            <button onClick={() => navigateTo('home')} className="p-2">
+              <span role="img" aria-label="home">🏠</span> घर
+            </button>
+            <button onClick={() => navigateTo('shop')} className="p-2">
+              <span role="img" aria-label="shop">🛒</span> दुकान
+            </button>
+            <button onClick={() => navigateTo('chat')} className="p-2">
+              <span role="img" aria-label="chat">💬</span> चैट
+            </button>
+            <button onClick={() => navigateTo('profile')} className="p-2">
+              <span role="img" aria-label="profile">👤</span> प्रोफाइल
+            </button>
           </div>
         </div>
       );
