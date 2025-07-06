@@ -1,0 +1,192 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI दुकानदार</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [page, setPage] = useState('login');
+      const [name, setName] = useState('');
+      const [location, setLocation] = useState('डमी लोकेशन');
+      const [chatHistory, setChatHistory] = useState([]);
+      const [inputMessage, setInputMessage] = useState('');
+
+      // Dummy login handler
+      const handleLogin = () => setPage('profile');
+
+      // Handle name submission and move to location confirmation
+      const handleNameSubmit = (e) => {
+        e.preventDefault();
+        setPage('confirmLocation');
+      };
+
+      // Confirm location and move to chat
+      const handleConfirmLocation = () => setPage('chat');
+
+      // Handle chat input and mock AI response
+      const handleSendMessage = (e) => {
+        e.preventDefault();
+        if (inputMessage.trim()) {
+          const newHistory = [...chatHistory, { sender: 'user', text: inputMessage }];
+          setChatHistory(newHistory);
+
+          // Mock AI response based on input
+          let aiResponse = '';
+          if (inputMessage.includes('चावल') || inputMessage.includes('rice')) {
+            aiResponse = '1 किलो चावल उपलब्ध है। क्या ऑर्डर करना चाहते हैं?';
+          } else if (inputMessage.includes('दाल') || inputMessage.includes('dal')) {
+            aiResponse = '500 ग्राम दाल उपलब्ध है। ऑर्डर करें?';
+          } else {
+            aiResponse = 'कृपया अपनी जरूरत बताएं (जैसे: चावल, दाल)';
+          }
+          setChatHistory([...newHistory, { sender: 'ai', text: aiResponse }]);
+          setInputMessage('');
+        }
+      };
+
+      // Navigation handlers
+      const navigateTo = (targetPage) => setPage(targetPage);
+
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-4">
+          {page === 'login' && (
+            <div className="bg-green-600 p-6 rounded-lg shadow-lg text-center w-full max-w-md">
+              <h1 className="text-2xl mb-4">AI दुकानदार</h1>
+              <p className="mb-4">मोबाइल नंबर से लॉगिन करें (डमी)</p>
+              <button
+                onClick={handleLogin}
+                className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800"
+              >
+                OTP भेजें
+              </button>
+            </div>
+          )}
+          {page === 'profile' && (
+            <div className="bg-green-600 p-6 rounded-lg shadow-lg text-center w-full max-w-md">
+              <h1 className="text-2xl mb-4">AI दुकानदार</h1>
+              <p className="mb-4">अपना नाम दर्ज करें</p>
+              <form onSubmit={handleNameSubmit} className="space-y-4">
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="नाम"
+                  className="p-2 rounded text-black w-full"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 w-full"
+                >
+                  लोकेशन ट्रैक करें
+                </button>
+              </form>
+            </div>
+          )}
+          {page === 'confirmLocation' && (
+            <div className="bg-green-600 p-6 rounded-lg shadow-lg text-center w-full max-w-md">
+              <h1 className="text-2xl mb-4">AI दुकानदार</h1>
+              <p className="mb-4">{name} (नाम)</p>
+              <p className="mb-4">लोकेशन: {location}</p>
+              <button
+                onClick={handleConfirmLocation}
+                className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 w-full"
+              >
+                लोकेशन की पुष्टि करें
+              </button>
+            </div>
+          )}
+          {page === 'chat' && (
+            <div className="bg-green-600 p-6 rounded-lg shadow-lg text-center w-full max-w-md">
+              <h1 className="text-2xl mb-4">AI दुकानदार</h1>
+              <p className="mb-4">AI से चैटिंग करें | ऑर्डर #12345</p>
+              <div className="mb-4 h-48 overflow-y-auto">
+                {chatHistory.map((msg, index) => (
+                  <p key={index} className={msg.sender === 'user' ? 'text-right' : 'text-left'}>
+                    {msg.text}
+                  </p>
+                ))}
+              </div>
+              <form onSubmit={handleSendMessage} className="space-y-2">
+                <input
+                  type="text"
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  placeholder="क्या खरीदना चाहते हैं?"
+                  className="p-2 rounded text-black w-full"
+                />
+                <button
+                  type="submit"
+                  className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 w-full"
+                >
+                  भेजें
+                </button>
+              </form>
+              <p className="text-sm mt-2">सुझाव: 1 किलो चावल, 500 ग्राम दाल</p>
+              <p className="text-sm">क्या आपकी लोकेशन घर की है?</p>
+            </div>
+          )}
+          <div className="flex justify-around w-full mt-4">
+            <button onClick={() => navigateTo('home')} className="text-white">घर</button>
+            <button onClick={() => navigateTo('shop')} className="text-white">दुकान</button>
+            <button onClick={() => navigateTo('chat')} className="text-white">चैट</button>
+            <button onClick={() => navigateTo('profile')} className="text-white">प्रोफाइल</button>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
