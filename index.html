@@ -147,14 +147,25 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message, language }),
           });
+          if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
           const data = await response.json();
           let reply = data.reply || lang.defaultReply;
-          // Hinglish detection and response if language is Hinglish
           if (language === 'hinglish' && message.toLowerCase().includes('rice')) reply = '1 kg rice available hai, order karna hai?';
           else if (language === 'hinglish' && message.toLowerCase().includes('dal')) reply = '500 gm dal available hai, order karna hai?';
           return reply;
         } catch (error) {
-          console.error('Error fetching backend response:', error);
+          console.error('Error fetching backend response:', error.message);
+          // Enhanced local fallback with more options
+          if (language === 'hindi') {
+            if (message.toLowerCase().includes('चावल')) return '1 किलो चावल उपलब्ध है, ऑर्डर करना है?';
+            else if (message.toLowerCase().includes('दाल')) return '500 ग्राम दाल उपलब्ध है, ऑर्डर करना है?';
+          } else if (language === 'hinglish') {
+            if (message.toLowerCase().includes('rice')) return '1 kg rice available hai, order karna hai?';
+            else if (message.toLowerCase().includes('dal')) return '500 gm dal available hai, order karna hai?';
+          } else if (language === 'english') {
+            if (message.toLowerCase().includes('rice')) return '1 kg rice is available, would you like to order?';
+            else if (message.toLowerCase().includes('dal')) return '500 gm dal is available, would you like to order?';
+          }
           return lang.errorReply;
         }
       };
@@ -288,7 +299,7 @@
                 <button
                   onClick={updateLocation}
                   className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 w-full mt-2"
-                >
+                  >
                   {lang.updateLocation}
                 </button>
                 <p className="text-sm mt-2 text-white">{lang.suggestions}: {getSuggestions()}</p>
