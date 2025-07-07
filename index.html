@@ -8,22 +8,8 @@
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    .map-background {
-      background-image: url('https://via.placeholder.com/300x200?text=Map+Placeholder');
-      background-size: cover;
-      background-position: center;
-      position: absolute;
-      inset: 0;
-      opacity: 0.2;
-      z-index: -1;
-    }
-    .login-background {
-      background-color: #f5f5f5;
-    }
-  </style>
 </head>
-<body class="bg-gray-900 text-black">
+<body class="bg-gray-100">
   <div id="root"></div>
 
   <script type="text/babel">
@@ -32,29 +18,25 @@
     function App() {
       const [page, setPage] = useState('login');
       const [name, setName] = useState('');
-      const [location, setLocation] = useState('डमी लोकेशन');
+      const [location, setLocation] = useState('दिल्ली, भारत'); // Example location
       const [chatHistory, setChatHistory] = useState([]);
       const [inputMessage, setInputMessage] = useState('');
-      const [userPreferences, setUserPreferences] = useState({});
-      const [language, setLanguage] = useState('hindi'); // Default to Hindi
-      const userId = 'defaultUser'; // Dummy user ID for context
-
-      useEffect(() => {
-        console.log('Page changed to:', page, 'Language:', language);
-      }, [page, language]);
+      const [isLoading, setIsLoading] = useState(false);
+      const [language, setLanguage] = useState('hindi');
+      const userId = 'defaultUser'; // In a real app, this would be dynamic
 
       const languageOptions = {
         hindi: {
           loginTitle: 'AI दुकानदार',
           loginText: 'मोबाइल नंबर से लॉगिन करें',
-          loginPlaceholder: 'मोबाइल नंबर',
+          loginPlaceholder: 'अपना 10 अंकों का मोबाइल नंबर दर्ज करें',
           loginButton: 'OTP भेजें',
           profileTitle: 'AI दुकानदार',
           profileText: 'अपना नाम दर्ज करें',
           profilePlaceholder: 'नाम',
           profileButton: 'लोकेशन ट्रैक करें',
           confirmTitle: 'AI दुकानदार',
-          confirmName: '(नाम)',
+          confirmName: 'नाम',
           confirmLocation: 'लोकेशन',
           confirmButton: 'लोकेशन की पुष्टि करें',
           chatTitle: 'AI दुकानदार',
@@ -63,269 +45,206 @@
           chatButton: 'भेजें',
           updateLocation: 'क्या यह लोकेशन सही है?',
           suggestions: 'सुझाव',
-          home: 'घर',
-          shop: 'दुकान',
-          chat: 'चैट',
+          home: 'होम',
+          order: 'ऑर्डर',
+          new: 'नया',
           profile: 'प्रोफाइल',
-          defaultReply: 'कृपया अपनी जरूरत बताएं।',
-          errorReply: 'क्षमा करें, अभी कोई जवाब नहीं मिला। बाद में पुन: प्रयास करें।'
+          errorReply: 'क्षमा करें, कोई जवाब नहीं मिला। कृपया बाद में प्रयास करें।',
+          loading: 'सोच रहा हूँ...'
         },
         hinglish: {
           loginTitle: 'AI Dukandar',
           loginText: 'Mobile number se login karein',
-          loginPlaceholder: 'Mobile number',
-          loginButton: 'OTP bhejo',
+          loginPlaceholder: 'Apna 10 digit mobile number daalein',
+          loginButton: 'OTP Bhejein',
           profileTitle: 'AI Dukandar',
-          profileText: 'Apna naam daal do',
+          profileText: 'Apna naam daalein',
           profilePlaceholder: 'Naam',
-          profileButton: 'Location track karo',
+          profileButton: 'Location Track Karein',
           confirmTitle: 'AI Dukandar',
-          confirmName: '(Naam)',
+          confirmName: 'Naam',
           confirmLocation: 'Location',
-          confirmButton: 'Lokeshan ki pushti karo',
+          confirmButton: 'Location confirm karein',
           chatTitle: 'AI Dukandar',
-          chatText: 'AI se chat karo | Order #12345',
+          chatText: 'AI se chat karein | Order #12345',
           chatPlaceholder: 'Kya khareedna hai?',
-          chatButton: 'Bhejo',
-          updateLocation: 'Kya ye location sahi hai?',
+          chatButton: 'Bhejein',
+          updateLocation: 'Kya yeh location sahi hai?',
           suggestions: 'Suggestions',
-          home: 'Ghar',
-          shop: 'Dukaan',
-          chat: 'Chat',
+          home: 'Home',
+          order: 'Order',
+          new: 'Naya',
           profile: 'Profile',
-          defaultReply: 'Kripya apni zarurat batayein.',
-          errorReply: 'Sorry, abhi koi jawab nahi mila. Baad mein try karein.'
+          errorReply: 'Sorry, koi response nahi mila. Please try again later.',
+          loading: 'Soch raha hu...'
         },
         english: {
           loginTitle: 'AI Shopkeeper',
-          loginText: 'Login with mobile number',
-          loginPlaceholder: 'Mobile number',
+          loginText: 'Login with your mobile number',
+          loginPlaceholder: 'Enter your 10-digit mobile number',
           loginButton: 'Send OTP',
           profileTitle: 'AI Shopkeeper',
           profileText: 'Enter your name',
           profilePlaceholder: 'Name',
           profileButton: 'Track Location',
           confirmTitle: 'AI Shopkeeper',
-          confirmName: '(Name)',
+          confirmName: 'Name',
           confirmLocation: 'Location',
           confirmButton: 'Confirm Location',
           chatTitle: 'AI Shopkeeper',
           chatText: 'Chat with AI | Order #12345',
-          chatPlaceholder: 'What to buy?',
+          chatPlaceholder: 'What would you like to buy?',
           chatButton: 'Send',
           updateLocation: 'Is this location correct?',
           suggestions: 'Suggestions',
           home: 'Home',
-          shop: 'Shop',
-          chat: 'Chat',
+          order: 'Order',
+          new: 'New',
           profile: 'Profile',
-          defaultReply: 'Please tell me your requirement.',
-          errorReply: 'Sorry, no response available. Please try again later.'
+          errorReply: 'Sorry, no response was received. Please try again later.',
+          loading: 'Thinking...'
         }
       };
-
+      
       const lang = languageOptions[language];
 
       const handleLogin = () => setPage('profile');
-      const handleNameSubmit = () => {
-        if (name.trim()) {
-          setPage('confirmLocation');
-        }
-      };
-      const handleConfirmLocation = () => {
-        setPage('chat'); // Default behavior, proceeds on click
-      };
-      const updateLocation = () => {
-        setLocation('अद्यतन डमी लोकेशन');
-        console.log('Location updated, please confirm again');
-        setPage('confirmLocation');
-      };
-
-      const getBackendResponse = async (message) => {
+      const handleNameSubmit = () => { if (name.trim()) setPage('confirmLocation'); };
+      const handleConfirmLocation = () => setPage('chat');
+      
+      // --- REVISED BACKEND CALL ---
+      const getBackendResponse = async (message, history) => {
         try {
-          const response = await fetch('https://my-ai-backend.vercel.app/api/chat', { // Replace with actual URL
+          // Use a relative URL that works with Vercel's serverless functions
+          const response = await fetch('/api/chat', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, language, userId }),
+            body: JSON.stringify({ message, language, userId, history }), // Send history for context
           });
-          if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
           const data = await response.json();
-          let reply = data.reply || lang.defaultReply;
-          if (language === 'english' && message.toLowerCase().includes('rice')) reply = '1 kg rice is available, would you like to order?';
-          else if (language === 'english' && message.toLowerCase().includes('dal')) reply = '500 gm dal is available, would you like to order?';
-          return reply;
+          return data.reply || lang.errorReply;
+
         } catch (error) {
           console.error('Error fetching backend response:', error.message);
-          // Enhanced local fallback with more options
-          if (language === 'hindi') {
-            if (message.toLowerCase().includes('चावल')) return '1 किलो चावल उपलब्ध है, ऑर्डर करना है?';
-            else if (message.toLowerCase().includes('दाल')) return '500 ग्राम दाल उपलब्ध है, ऑर्डर करना है?';
-          } else if (language === 'hinglish') {
-            if (message.toLowerCase().includes('rice')) return '1 kg rice available hai, order karna hai?';
-            else if (message.toLowerCase().includes('dal')) return '500 gm dal available hai, order karna hai?';
-          } else if (language === 'english') {
-            if (message.toLowerCase().includes('rice')) return '1 kg rice is available, would you like to order?';
-            else if (message.toLowerCase().includes('dal')) return '500 gm dal is available, would you like to order?';
-          }
-          return lang.errorReply;
+          return lang.errorReply; // Return a simple error message
         }
       };
 
       const handleSendMessage = async (e) => {
         e.preventDefault();
-        if (inputMessage.trim()) {
-          const newHistory = [...chatHistory, { sender: 'user', text: inputMessage }];
+        if (inputMessage.trim() && !isLoading) {
+          const userMessage = { sender: 'user', text: inputMessage };
+          const newHistory = [...chatHistory, userMessage];
+          
           setChatHistory(newHistory);
-
-          const aiResponse = await getBackendResponse(inputMessage);
-          setChatHistory([...newHistory, { sender: 'ai', text: aiResponse }]);
           setInputMessage('');
+          setIsLoading(true);
+
+          const aiResponseText = await getBackendResponse(inputMessage, newHistory);
+          const aiMessage = { sender: 'ai', text: aiResponseText };
+          
+          setChatHistory([...newHistory, aiMessage]);
+          setIsLoading(false);
         }
       };
-
-      const getSuggestions = () => {
-        const prefs = Object.entries(userPreferences)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 2)
-          .map(([item]) => (item === 'rice' ? (language === 'hinglish' ? '1 kg rice' : language === 'english' ? '1 kg rice' : '1 किलो चावल') : (language === 'hinglish' ? '500 gm dal' : language === 'english' ? '500 gm dal' : '500 ग्राम दाल')));
-        return prefs.length ? prefs.join(', ') : (language === 'hinglish' ? '1 kg rice, 500 gm dal' : language === 'english' ? '1 kg rice, 500 gm dal' : '1 किलो चावल, 500 ग्राम दाल');
-      };
-
-      const changeLanguage = (newLanguage) => {
-        setLanguage(newLanguage);
-        setChatHistory([]); // Clear chat on language change
+      
+      const changeLanguage = (newLang) => {
+        setLanguage(newLang);
+        setChatHistory([]);
       };
 
       const navigateTo = (targetPage) => setPage(targetPage);
 
       return (
-        <div className="min-h-screen flex flex-col items-center justify-between p-4">
-          <div className="w-full max-w-md">
+        <div className="min-h-screen max-w-md mx-auto flex flex-col bg-white shadow-lg">
+          {/* Header */}
+          <div className="bg-green-600 text-white p-4 text-center">
+            <h1 className="text-2xl font-bold">{lang.loginTitle}</h1>
+          </div>
+          
+          {/* Main Content */}
+          <div className="flex-grow p-4 overflow-y-auto">
             {page === 'login' && (
-              <div className="bg-green-600 p-4 rounded-t-lg shadow-lg text-center login-background relative">
-                <h1 className="text-2xl mb-4 text-white">{lang.loginTitle}</h1>
-                <p className="mb-4 text-white">{lang.loginText}</p>
-                <input
-                  type="text"
-                  placeholder={lang.loginPlaceholder}
-                  className="p-2 mb-4 rounded w-full text-black"
-                />
-                <button
-                  onClick={handleLogin}
-                  className="bg-green-700 text-white px-4 py-2 rounded w-full hover:bg-green-800"
-                >
+              <div className="flex flex-col space-y-4">
+                <p className="text-center text-gray-700">{lang.loginText}</p>
+                <input type="tel" placeholder={lang.loginPlaceholder} className="p-3 border rounded-lg w-full" />
+                <button onClick={handleLogin} className="bg-green-600 text-white px-4 py-3 rounded-lg w-full font-semibold hover:bg-green-700">
                   {lang.loginButton}
                 </button>
-                <div className="mt-2">
-                  <button onClick={() => changeLanguage('hindi')} className="bg-gray-500 text-white px-2 py-1 rounded mr-1">हिन्दी</button>
-                  <button onClick={() => changeLanguage('hinglish')} className="bg-gray-500 text-white px-2 py-1 rounded mr-1">Hinglish</button>
-                  <button onClick={() => changeLanguage('english')} className="bg-gray-500 text-white px-2 py-1 rounded">English</button>
-                </div>
-                <div className="map-background"></div>
               </div>
             )}
             {page === 'profile' && (
-              <div className="bg-green-600 p-4 rounded-t-lg shadow-lg text-center w-full max-w-md relative">
-                <h1 className="text-2xl mb-4 text-white">{lang.profileTitle}</h1>
-                <p className="mb-4 text-white">{lang.profileText}</p>
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder={lang.profilePlaceholder}
-                    className="p-2 rounded text-black w-full z-10"
-                    required
-                  />
-                  <button
-                    onClick={handleNameSubmit}
-                    className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 w-full z-10"
-                  >
-                    {lang.profileButton}
-                  </button>
-                </div>
-                <div className="mt-2">
-                  <button onClick={() => changeLanguage('hindi')} className="bg-gray-500 text-white px-2 py-1 rounded mr-1">हिन्दी</button>
-                  <button onClick={() => changeLanguage('hinglish')} className="bg-gray-500 text-white px-2 py-1 rounded mr-1">Hinglish</button>
-                  <button onClick={() => changeLanguage('english')} className="bg-gray-500 text-white px-2 py-1 rounded">English</button>
-                </div>
-                <div className="map-background"></div>
+               <div className="flex flex-col space-y-4">
+                <p className="text-center text-gray-700">{lang.profileText}</p>
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={lang.profilePlaceholder} className="p-3 border rounded-lg w-full" required />
+                <button onClick={handleNameSubmit} className="bg-green-600 text-white px-4 py-3 rounded-lg w-full font-semibold hover:bg-green-700">
+                  {lang.profileButton}
+                </button>
               </div>
             )}
             {page === 'confirmLocation' && (
-              <div className="bg-green-600 p-4 rounded-t-lg shadow-lg text-center w-full max-w-md relative">
-                <h1 className="text-2xl mb-4 text-white">{lang.confirmTitle}</h1>
-                <p className="mb-4 text-white">{name} {lang.confirmName}</p>
-                <p className="mb-4 text-white">{lang.confirmLocation}: {location}</p>
-                <button
-                  onClick={handleConfirmLocation}
-                  className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 w-full z-10"
-                >
+              <div className="flex flex-col space-y-4 text-center">
+                 <p className="text-gray-700">{lang.confirmName}: <span className="font-bold">{name}</span></p>
+                 <p className="text-gray-700">{lang.confirmLocation}: <span className="font-bold">{location}</span></p>
+                 <div className="p-4 border rounded-lg bg-gray-200">
+                                     </div>
+                 <button onClick={handleConfirmLocation} className="bg-green-600 text-white px-4 py-3 rounded-lg w-full font-semibold hover:bg-green-700">
                   {lang.confirmButton}
                 </button>
-                <div className="mt-2">
-                  <button onClick={() => changeLanguage('hindi')} className="bg-gray-500 text-white px-2 py-1 rounded mr-1">हिन्दी</button>
-                  <button onClick={() => changeLanguage('hinglish')} className="bg-gray-500 text-white px-2 py-1 rounded mr-1">Hinglish</button>
-                  <button onClick={() => changeLanguage('english')} className="bg-gray-500 text-white px-2 py-1 rounded">English</button>
-                </div>
-                <div className="map-background"></div>
               </div>
             )}
             {page === 'chat' && (
-              <div className="bg-green-600 p-4 rounded-t-lg shadow-lg text-center w-full max-w-md relative">
-                <h1 className="text-2xl mb-4 text-white">{lang.chatTitle}</h1>
-                <p className="mb-4 text-white">{lang.chatText}</p>
-                <div className="mb-4 h-48 overflow-y-auto bg-white text-black p-2 rounded">
+              <div className="flex flex-col h-[70vh]">
+                <div className="flex-grow overflow-y-auto mb-4 space-y-4 p-2">
                   {chatHistory.map((msg, index) => (
-                    <p key={index} className={msg.sender === 'user' ? 'text-right' : 'text-left'}>
-                      {msg.text}
-                    </p>
+                    <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <p className={`p-3 rounded-2xl max-w-xs ${msg.sender === 'user' ? 'bg-green-200' : 'bg-gray-200'}`}>
+                        {msg.text}
+                      </p>
+                    </div>
                   ))}
+                  {isLoading && (
+                     <div className="flex justify-start">
+                        <p className="p-3 rounded-2xl bg-gray-200 animate-pulse">{lang.loading}</p>
+                     </div>
+                  )}
                 </div>
-                <form onSubmit={handleSendMessage} className="space-y-2">
-                  <input
-                    type="text"
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder={lang.chatPlaceholder}
-                    className="p-2 rounded text-black w-full"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 w-full"
-                  >
+                <form onSubmit={handleSendMessage} className="flex space-x-2">
+                  <input type="text" value={inputMessage} onChange={(e) => setInputMessage(e.target.value)} placeholder={lang.chatPlaceholder} className="p-3 border rounded-lg w-full" />
+                  <button type="submit" className="bg-green-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-green-700" disabled={isLoading}>
                     {lang.chatButton}
                   </button>
                 </form>
-                <button
-                  onClick={updateLocation}
-                  className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 w-full mt-2"
-                >
-                  {lang.updateLocation}
-                </button>
-                <p className="text-sm mt-2 text-white">{lang.suggestions}: {getSuggestions()}</p>
-                <div className="mt-2">
-                  <button onClick={() => changeLanguage('hindi')} className="bg-gray-500 text-white px-2 py-1 rounded mr-1">हिन्दी</button>
-                  <button onClick={() => changeLanguage('hinglish')} className="bg-gray-500 text-white px-2 py-1 rounded mr-1">Hinglish</button>
-                  <button onClick={() => changeLanguage('english')} className="bg-gray-500 text-white px-2 py-1 rounded">English</button>
-                </div>
-                <div className="map-background"></div>
               </div>
             )}
           </div>
-          <div className="flex justify-around w-full max-w-md p-2 bg-white text-black rounded-b-lg">
-            <button onClick={() => navigateTo('home')} className="p-2">
-              <span role="img" aria-label="home">🏠</span> {lang.home}
-            </button>
-            <button onClick={() => navigateTo('shop')} className="p-2">
-              <span role="img" aria-label="shop">🛒</span> {lang.shop}
-            </button>
-            <button onClick={() => navigateTo('chat')} className="p-2">
-              <span role="img" aria-label="chat">💬</span> {lang.chat}
-            </button>
-            <button onClick={() => navigateTo('profile')} className="p-2">
-              <span role="img" aria-label="profile">👤</span> {lang.profile}
-            </button>
+
+          {/* Language and Navigation */}
+          <div className="p-2 bg-gray-100 border-t">
+              <div className="flex justify-center space-x-2 mb-2">
+                <button onClick={() => changeLanguage('hindi')} className={`px-3 py-1 text-sm rounded-full ${language === 'hindi' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}>हिन्दी</button>
+                <button onClick={() => changeLanguage('hinglish')} className={`px-3 py-1 text-sm rounded-full ${language === 'hinglish' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}>Hinglish</button>
+                <button onClick={() => changeLanguage('english')} className={`px-3 py-1 text-sm rounded-full ${language === 'english' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}>English</button>
+              </div>
+              <div className="flex justify-around w-full p-2 bg-white text-gray-700 rounded-lg shadow-inner">
+                <button onClick={() => navigateTo('login')} className="p-2 text-center">
+                  <span className="text-2xl">🏠</span><p className="text-xs">{lang.home}</p>
+                </button>
+                <button onClick={() => {}} className="p-2 text-center text-gray-400"> {/* Disabled */}
+                  <span className="text-2xl">🛒</span><p className="text-xs">{lang.order}</p>
+                </button>
+                <button onClick={() => {}} className="p-2 text-center text-gray-400"> {/* Disabled */}
+                  <span className="text-2xl">➕</span><p className="text-xs">{lang.new}</p>
+                </button>
+                <button onClick={() => navigateTo('profile')} className="p-2 text-center">
+                  <span className="text-2xl">👤</span><p className="text-xs">{lang.profile}</p>
+                </button>
+              </div>
           </div>
         </div>
       );
