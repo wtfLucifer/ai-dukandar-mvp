@@ -39,6 +39,7 @@
       // Handle name submission and move to location confirmation
       const handleNameSubmit = (e) => {
         e.preventDefault();
+        console.log('Submitting name:', name); // Debug log
         setPage('confirmLocation');
       };
 
@@ -115,28 +116,32 @@
               <div className="bg-green-600 p-4 rounded-t-lg shadow-lg text-center w-full max-w-md relative">
                 <h1 className="text-2xl mb-4 text-white">AI दुकानदार</h1>
                 <p className="mb-4 text-white">अपना नाम दर्ज करें</p>
-                <form onSubmit={handleNameSubmit} className="space-y-4">
+                <div className="space-y-4">
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => {
-                      console.log('Name input:', e.target.value); // Debug log
+                      console.log('Name input:', e.target.value);
                       setName(e.target.value);
-                   }}
-                   placeholder="नाम"
-                   className="p-2 rounded text-black w-full"
-                   required
-                 />
-                 <button
-                   type="submit"
-                   className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 w-full"
-                >
-                   लोकेशन ट्रैक करें
-                </button>
-              </form>
-              <div className="map-background absolute inset-0 opacity-20"></div>
-            </div>
-          )}
+                    }}
+                    placeholder="नाम"
+                    className="p-2 rounded text-black w-full z-10"
+                    required
+                  />
+                  <button
+                    onClick={() => {
+                      console.log('Button clicked, name:', name);
+                      if (name.trim()) setPage('confirmLocation');
+                      else console.log('Name is empty');
+                      }}
+                      className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 w-full z-10"
+                  >
+                    लोकेशन ट्रैक करें
+                  </button>
+                </div>
+                <div className="map-background"></div>
+              </div>
+            )}
             {page === 'confirmLocation' && (
               <div className="bg-green-600 p-4 rounded-t-lg shadow-lg text-center w-full max-w-md relative">
                 <h1 className="text-2xl mb-4 text-white">AI दुकानदार</h1>
