@@ -37,6 +37,7 @@
       const [inputMessage, setInputMessage] = useState('');
       const [userPreferences, setUserPreferences] = useState({});
       const [language, setLanguage] = useState('hindi'); // Default to Hindi
+      const userId = 'defaultUser'; // Dummy user ID for context
 
       useEffect(() => {
         console.log('Page changed to:', page, 'Language:', language);
@@ -142,16 +143,16 @@
 
       const getBackendResponse = async (message) => {
         try {
-          const response = await fetch('https://ai-dukandar-mvp.vercel.app/api/chat', {
+          const response = await fetch('https://my-ai-backend.vercel.app/api/chat', { // Replace with actual URL
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, language }),
+            body: JSON.stringify({ message, language, userId }),
           });
           if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
           const data = await response.json();
           let reply = data.reply || lang.defaultReply;
-          if (language === 'hinglish' && message.toLowerCase().includes('rice')) reply = '1 kg rice available hai, order karna hai?';
-          else if (language === 'hinglish' && message.toLowerCase().includes('dal')) reply = '500 gm dal available hai, order karna hai?';
+          if (language === 'english' && message.toLowerCase().includes('rice')) reply = '1 kg rice is available, would you like to order?';
+          else if (language === 'english' && message.toLowerCase().includes('dal')) reply = '500 gm dal is available, would you like to order?';
           return reply;
         } catch (error) {
           console.error('Error fetching backend response:', error.message);
