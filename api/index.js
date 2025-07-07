@@ -1,4 +1,3 @@
-
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -18,22 +17,26 @@ app.post('/api/chat', async (req, res) => {
   const { message, language } = req.body;
   try {
     const response = await axios.post(
-      `https://api.google.ai/gemini/v1/models/gemini-pro:generateText`,
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
       {
-        prompt: {
-          text: `You are an AI shopkeeper. Respond in ${language === 'hinglish' ? 'Hinglish' : language} to the user's shopping request: ${message}. Suggest products if relevant.`
-        },
-        temperature: 0.7,
-        maxOutputTokens: 100,
+        contents: [
+          {
+            parts: [
+              {
+                text: `You are an AI shopkeeper. Respond in ${language === 'hinglish' ? 'Hinglish' : language} to the user's shopping request: ${message}. Suggest products if relevant.`
+              }
+            ]
+          }
+        ]
       },
       {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.GEMINI_API_KEY}`,
+          'X-goog-api-key': GEMINI_API_KEY,
         },
       }
     );
-    res.json({ reply: response.data?.candidates?.[0]?.output || 'Default response' });
+    res.json({ reply: response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Default response' });
   } catch (error) {
     console.error('Error fetching Gemini response:', error.response?.data || error.message);
     res.status(500).json({ reply: 'Error occurred' });
